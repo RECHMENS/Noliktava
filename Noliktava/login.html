@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+    <div class="login-box">
+        <div class="login-form" id="loginForm">
+
+            <h1>Sign-in</h1>
+
+            <input type="email" id="email" placeholder="E-mail">
+            <input type="password" id="password" placeholder="Password">
+
+            <button type="button" class="login-btn" id="loginBtn">
+                Login
+            </button>
+
+            <button type="button" class="register-btn" id="registerBtn">
+                Register
+            </button>
+
+        </div>
+        <div class="register-form" id="registerForm">
+
+            <h1>Register</h1>
+
+            <input type="text" id="usernameID" placeholder="Username" autocomplete="username">
+
+            <input type="email" id="registerEmail" placeholder="E-mail">
+            <input type="password" id="registerPassword" placeholder="Password">
+            <input type="password" id="confirmPassword" placeholder="Confirm Password">
+
+            <div class="profile-upload">
+
+                <div class="profile-preview">
+
+                    <img id="profilePreview" src="" alt="Profile Picture">
+
+                </div>
+                <div class="profile-actions">
+
+                    <label for="profilePicture" class="upload-btn">
+                        Upload Picture
+                    </label>
+
+                    <button type="button" class="change-btn" id="changePictureBtn">
+                        Change Picture
+                    </button>
+
+                    <input type="file" id="profilePicture" accept="image/*">
+
+                </div>
+            </div>
+
+            <button type="button" class="create-account-btn" id="createAccountBtn">
+                Create Account
+            </button>
+
+            <button type="button" class="back-btn" id="backBtn">
+                Back to Login
+            </button>
+
+        </div>
+    </div>
+
+    <script src="login.js"></script>
+
+</body>
+</html>
