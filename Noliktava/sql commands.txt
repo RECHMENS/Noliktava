@@ -1,0 +1,3 @@
+UPDATE lietotaju_registrs
+SET loma = 'admin'
+WHERE Epasts = 'your@email.com';
