@@ -42,6 +42,7 @@ body {
     cursor: pointer;
 }
 .btn:hover { background: #5a94cb; }
+.btn:disabled { opacity: 0.6; cursor: default; }
 
 .page {
     max-width: 960px;
@@ -68,7 +69,7 @@ body {
     gap: 10px;
 }
 
-input[type="text"], input[type="email"], input[type="password"], select {
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], select {
     height: 42px;
     border: none;
     border-radius: 12px;
@@ -84,3 +85,47 @@ input[type="checkbox"] { width: 20px; height: 20px; }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.25); }
+
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab {
+    height: 38px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 12px;
+    background: #3c6a96;
+    color: #f5f5f5;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    opacity: 0.7;
+}
+.tab:hover { opacity: 1; }
+.tab.active { opacity: 1; background: #2f5578; }
+
+.tab-content { display: none; }
+.tab-content.active { display: grid; gap: 16px; }
+
+td input[type="text"], td input[type="number"] { width: 100%; min-width: 100px; height: 36px; }
+td .qty-input { min-width: 80px; width: 90px; }
+.row-actions { display: flex; gap: 6px; }
+.btn-small { height: 34px; padding: 0 14px; }
+
+.btn-danger { background: #b94a4a; }
+.btn-danger:hover { background: #cc5a5a; }
+
+.nowrap { white-space: nowrap; }
+.log-details { word-break: break-word; min-width: 220px; }
+
+.popup {
+    background: #3c6a96;
+    border-radius: 12px;
+    height: 150px;
+    width: 800px;
+    left: 50px;
+    display: flex;
+    flex-wrap: wrap;
+    color: #f5f5f5;
+    font-size: 15px;
+    font-weight: 600;
+
+}

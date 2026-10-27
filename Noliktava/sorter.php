@@ -20,6 +20,6 @@ $user = guardPage(['sorter', 'admin']);
         </section>
     </main>
 
-    <script src="common.js"></script>
+    <script src="error.js"></script>
 </body>
 </html>

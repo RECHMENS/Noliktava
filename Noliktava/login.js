@@ -15,8 +15,6 @@ registerBtn.addEventListener("click", function () {
 
 backBtn.addEventListener("click", showLogin);
 
-/* ---------- Profile picture preview ---------- */
-
 const profilePicture = document.getElementById("profilePicture");
 const profilePreview = document.getElementById("profilePreview");
 const changePictureBtn = document.getElementById("changePictureBtn");
@@ -47,9 +45,6 @@ changePictureBtn.addEventListener("click", function () {
     profilePicture.click();
 });
 
-/* ---------- Login ---------- */
-
-// Where each role lands after logging in
 const ROLE_PAGES = {
     admin: "admin.php",
     worker: "worker.php",
@@ -96,7 +91,6 @@ async function doLogin() {
 
 document.getElementById("loginBtn").addEventListener("click", doLogin);
 
-// Press Enter in the login fields to sign in
 ["email", "password"].forEach(function (id) {
     document.getElementById(id).addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
@@ -104,8 +98,6 @@ document.getElementById("loginBtn").addEventListener("click", doLogin);
         }
     });
 });
-
-/* ---------- Register ---------- */
 
 const createAccountBtn = document.getElementById("createAccountBtn");
 const usernameInput = document.getElementById("usernameID");
@@ -147,7 +139,6 @@ createAccountBtn.addEventListener("click", async function () {
         const message = (await response.text()).trim();
         alert(message);
 
-        // On success, go back to the login form
         if (message === "Konts veiksmīgi izveidots!") {
             document.getElementById("email").value = email;
             showLogin();

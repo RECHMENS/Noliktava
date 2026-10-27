@@ -15,11 +15,22 @@ $user = guardPage(['worker', 'admin']);
 
     <main class="page">
         <section class="panel">
-            <h2>Your tasks</h2>
-            <p class="muted"></p>
+            <h2>Products</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Name</th><th>SKU</th><th>Quantity</th><th>Location</th><th></th></tr>
+                    </thead>
+                    <tbody id="productRows">
+                        <tr><td colspan="5">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
     </main>
 
-    <script src="common.js"></script>
+    <script src="error.js"></script>
+    <script src="products.js"></script>
+    <script>initProducts(document.getElementById("productRows"), false);</script>
 </body>
 </html>

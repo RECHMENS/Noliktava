@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: text/plain; charset=UTF-8');
 require_once __DIR__ . '/connection.php';
+require_once __DIR__ . '/logger.php';
 
 $username = trim($_POST['username'] ?? '');
 $email    = trim($_POST['email'] ?? '');
@@ -55,6 +56,8 @@ try {
     $insert->bindValue(':password', password_hash($password, PASSWORD_DEFAULT));
     $insert->bindValue(':image', $imageData, $imageData === null ? PDO::PARAM_NULL : PDO::PARAM_LOB);
     $insert->execute();
+
+    logAction($conn, (int)$conn->lastInsertId(), 'register', "$username ($email) registered themselves");
 
     echo "Konts veiksmīgi izveidots!";
 

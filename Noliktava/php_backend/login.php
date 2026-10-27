@@ -2,6 +2,7 @@
 session_start();
 header('Content-Type: text/plain; charset=UTF-8');
 require_once __DIR__ . '/connection.php';
+require_once __DIR__ . '/logger.php';
 
 $email    = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
@@ -13,7 +14,7 @@ if ($email === '' || $password === '') {
 
 try {
     $stmt = $conn->prepare(
-        "SELECT lietotaji_id, parole, loma, aktivs
+        "SELECT lietotaji_id, `lietotajvārds` AS username, parole, loma, aktivs
          FROM lietotaju_registrs WHERE Epasts = :email"
     );
     $stmt->execute([':email' => $email]);
@@ -21,6 +22,7 @@ try {
 
     if ($user && password_verify($password, $user['parole'])) {
         if (!(int)$user['aktivs']) {
+            logAction($conn, (int)$user['lietotaji_id'], 'login_blocked', 'Deactivated account tried to log in');
             echo "Konts ir deaktivizēts. Sazinies ar administratoru.";
             exit;
         }
@@ -28,10 +30,16 @@ try {
         $_SESSION['user_id'] = (int)$user['lietotaji_id'];
         $_SESSION['role']    = $user['loma'];
 
+        logAction($conn, (int)$user['lietotaji_id'], 'login', 'Role: ' . $user['loma']);
         echo "OK:" . $user['loma'];
         exit;
     }
 
+    if ($user) {
+        logAction($conn, (int)$user['lietotaji_id'], 'login_failed', 'Wrong password');
+    } else {
+        logAction($conn, null, 'login_failed', 'Unknown e-mail: ' . $email);
+    }
     echo "Nepareizs E-pasts vai parole!";
 
 } catch (PDOException $e) {
