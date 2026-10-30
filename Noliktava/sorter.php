@@ -8,7 +8,8 @@ $user = guardPage(['sorter', 'admin']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warehouse – Sorter</title>
-    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="dashboard.css?v=11">
+    <link rel="stylesheet" href="popup.css?v=11">
 </head>
 <body>
     <?php renderHeader($user, 'Sorter'); ?>
@@ -20,6 +21,7 @@ $user = guardPage(['sorter', 'admin']);
         </section>
     </main>
 
-    <script src="error.js"></script>
+    <script src="popup.js?v=11"></script>
+    <script src="error.js?v=11"></script>
 </body>
 </html>

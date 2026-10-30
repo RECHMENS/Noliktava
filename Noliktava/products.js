@@ -59,7 +59,7 @@ function initProducts(tbody, canDelete) {
                         save.textContent = "Saved ✓";
                         setTimeout(function () { save.textContent = "Save"; }, 1500);
                     } catch (e) {
-                        alert(e.message);
+                        showMessage(e.message, "error");
                     }
                     save.disabled = false;
                 });
@@ -74,12 +74,12 @@ function initProducts(tbody, canDelete) {
                     del.className = "btn btn-small btn-danger";
                     del.textContent = "Delete";
                     del.addEventListener("click", async function () {
-                        if (!confirm('Delete "' + p.name + '"?')) return;
+                        if (!(await showConfirm('Delete "' + p.name + '"?', "Delete", true))) return;
                         try {
                             await api("delete-product", { productId: id });
                             load();
                         } catch (e) {
-                            alert(e.message);
+                            showMessage(e.message, "error");
                         }
                     });
                     actions.appendChild(del);

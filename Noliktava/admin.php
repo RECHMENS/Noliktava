@@ -9,13 +9,23 @@ $myId = (int)$user['lietotaji_id'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warehouse – Admin</title>
-    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="dashboard.css?v=11">
+    <link rel="stylesheet" href="popup.css?v=11">
 </head>
 <body data-user-id="<?= $myId ?>">
     <?php renderHeader($user, 'Admin panel'); ?>
 
-    <main class="page">
-        <section class="panel">
+    <div class="layout">
+        <nav class="menu" aria-label="Admin sections">
+            <button type="button" class="menu-item active" data-section="add-user">Add users</button>
+            <button type="button" class="menu-item" data-section="users">Users</button>
+            <button type="button" class="menu-item" data-section="products">Products</button>
+            <button type="button" class="menu-item" data-section="shipments">Shipments</button>
+            <button type="button" class="menu-item" data-section="activity-log">Activity log</button>
+        </nav>
+
+        <main class="page">
+        <section class="panel section active" id="section-add-user">
             <h2>Add user</h2>
             <div class="add-form">
                 <input type="text" id="newUsername" placeholder="Username" maxlength="100">
@@ -30,7 +40,7 @@ $myId = (int)$user['lietotaji_id'];
             </div>
         </section>
 
-        <section class="panel">
+        <section class="panel section" id="section-users">
             <h2>Users</h2>
             <div class="table-wrap">
                 <table>
@@ -44,15 +54,10 @@ $myId = (int)$user['lietotaji_id'];
             </div>
         </section>
 
-        <section class="panel">
-            <h2>Warehouse</h2>
+        <section class="panel section" id="section-products">
+            <h2>Products</h2>
 
-            <div class="tabs" role="tablist">
-                <button type="button" class="tab active" data-tab="products" role="tab">Products</button>
-                <button type="button" class="tab" data-tab="log" role="tab">Activity log</button>
-            </div>
-
-            <div class="tab-content active" id="tab-products">
+            <div class="stack" id="tab-products">
                 <div class="add-form">
                     <input type="text" id="newProductName" placeholder="Product name" maxlength="150">
                     <input type="text" id="newProductSku" placeholder="SKU" maxlength="50">
@@ -73,48 +78,26 @@ $myId = (int)$user['lietotaji_id'];
                 </div>
             </div>
 
-            <div class="tab-content" id="tab-log">
-                <div class="add-form">
-                    <input type="text" id="logSearch" placeholder="Search user or details">
-                    <select id="logFilter">
-                        <option value="">All actions</option>
-                        <option value="login">Login</option>
-                        <option value="login_failed">Failed login</option>
-                        <option value="login_blocked">Blocked login</option>
-                        <option value="logout">Logout</option>
-                        <option value="register">Registration</option>
-                        <option value="profile_update">Profile update</option>
-                        <option value="account_delete">Account deleted</option>
-                        <option value="user_add">User added</option>
-                        <option value="role_change">Role changed</option>
-                        <option value="active_change">Active changed</option>
-                        <option value="product_add">Product added</option>
-                        <option value="product_update">Product updated</option>
-                        <option value="product_delete">Product deleted</option>
-                    </select>
-                    <button type="button" id="logRefreshBtn" class="btn">Refresh</button>
-                </div>
-
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr><th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th></tr>
-                        </thead>
-                        <tbody id="logRows">
-                            <tr><td colspan="5">Loading…</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <p class="muted">Showing the latest 200 matching entries.</p>
-            </div>
         </section>
 
-        <div class="popup"></div>
-        <div class="popup-text"></div>
-    </main>
+        <section class="panel section" id="section-activity-log">
+            <h2>Activity log</h2>
+            <div id="activityLog"></div>
+        </section>
 
-    <script src="error.js"></script>
-    <script src="products.js"></script>
-    <script src="admin.js"></script>
+        <section class="panel section" id="section-shipments">
+            <h2>Shipments</h2>
+            <div id="shipments"></div>
+        </section>
+    </main>
+    </div>
+
+    <script src="popup.js?v=11"></script>
+    <script src="error.js?v=11"></script>
+    <script src="products.js?v=11"></script>
+    <script src="shipments.js?v=11"></script>
+    <script src="activitylog.js?v=11"></script>
+    <script src="admin.js?v=11"></script>
+    <script src="menu.js?v=11"></script>
 </body>
 </html>

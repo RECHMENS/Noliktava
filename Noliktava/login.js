@@ -28,7 +28,7 @@ profilePicture.addEventListener("change", function () {
     }
 
     if (!file.type.startsWith("image/")) {
-        alert("Please select an image.");
+        showMessage("Please select an image.", "error");
         this.value = "";
         return;
     }
@@ -56,7 +56,7 @@ async function doLogin() {
     const password = document.getElementById("password").value;
 
     if (!email || !password) {
-        alert("Please fill in all fields.");
+        showMessage("Please fill in all fields.", "error");
         return;
     }
 
@@ -79,13 +79,13 @@ async function doLogin() {
             if (page) {
                 window.location.href = page;
             } else {
-                alert("Your account has no valid role. Contact an administrator.");
+                showMessage("Your account has no valid role. Contact an administrator.", "error");
             }
         } else {
-            alert(result);
+            showMessage(result, "error");
         }
     } catch (error) {
-        alert("Could not reach the server.");
+        showMessage("Could not reach the server.", "error");
     }
 }
 
@@ -112,12 +112,12 @@ createAccountBtn.addEventListener("click", async function () {
     const confirm = confirmPassword.value;
 
     if (!username || !email || !password || !confirm) {
-        alert("Please fill in all fields.");
+        showMessage("Please fill in all fields.", "error");
         return;
     }
 
     if (password !== confirm) {
-        alert("Passwords do not match.");
+        showMessage("Passwords do not match.", "error");
         return;
     }
 
@@ -137,13 +137,13 @@ createAccountBtn.addEventListener("click", async function () {
         });
 
         const message = (await response.text()).trim();
-        alert(message);
+        showMessage(message, message === "Konts veiksmīgi izveidots!" ? "success" : "error");
 
         if (message === "Konts veiksmīgi izveidots!") {
             document.getElementById("email").value = email;
             showLogin();
         }
     } catch (error) {
-        alert("Could not reach the server.");
+        showMessage("Could not reach the server.", "error");
     }
 });

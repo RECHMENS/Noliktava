@@ -35,7 +35,7 @@ async function loadUsers() {
                 try {
                     await api("set-role", { userId: id, role: select.value });
                 } catch (e) {
-                    alert(e.message);
+                    showMessage(e.message, "error");
                     loadUsers();
                 }
             });
@@ -48,7 +48,7 @@ async function loadUsers() {
                 try {
                     await api("set-active", { userId: id, active: check.checked });
                 } catch (e) {
-                    alert(e.message);
+                    showMessage(e.message, "error");
                     loadUsers();
                 }
             });
@@ -83,23 +83,14 @@ document.getElementById("addUserBtn").addEventListener("click", async function (
             role: role.value
         });
         username.value = email.value = password.value = "";
+        showMessage("User created.", "success");
         loadUsers();
     } catch (e) {
-        alert(e.message);
+        showMessage(e.message, "error");
     }
 });
 
 loadUsers();
-
-document.querySelectorAll(".tab").forEach(function (tab) {
-    tab.addEventListener("click", function () {
-        document.querySelectorAll(".tab").forEach(function (t) { t.classList.remove("active"); });
-        document.querySelectorAll(".tab-content").forEach(function (c) { c.classList.remove("active"); });
-        tab.classList.add("active");
-        document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
-        if (tab.dataset.tab === "log") loadLogs();
-    });
-});
 
 const loadProducts = initProducts(document.getElementById("productRows"), true);
 
@@ -118,75 +109,17 @@ document.getElementById("addProductBtn").addEventListener("click", async functio
         });
         name.value = sku.value = loc.value = "";
         qty.value = 0;
+        showMessage("Product added.", "success");
         loadProducts();
     } catch (e) {
-        alert(e.message);
+        showMessage(e.message, "error");
     }
 });
 
-const logRows = document.getElementById("logRows");
-const logSearch = document.getElementById("logSearch");
-const logFilter = document.getElementById("logFilter");
+const activityLog = initActivityLog(document.getElementById("activityLog"));
 
-const ACTION_LABELS = {
-    login: "Login",
-    login_failed: "Failed login",
-    login_blocked: "Blocked login",
-    logout: "Logout",
-    register: "Registration",
-    profile_update: "Profile update",
-    account_delete: "Account deleted",
-    user_add: "User added",
-    role_change: "Role changed",
-    active_change: "Active changed",
-    product_add: "Product added",
-    product_update: "Product updated",
-    product_delete: "Product deleted"
-};
+initShipments(document.getElementById("shipments"));
 
-function logMessage(text) {
-    logRows.innerHTML = "";
-    const tr = document.createElement("tr");
-    const td = cell(text);
-    td.colSpan = 5;
-    tr.appendChild(td);
-    logRows.appendChild(tr);
-}
-
-async function loadLogs() {
-    try {
-        const data = await api("list-logs", {
-            filter: logFilter.value,
-            search: logSearch.value.trim()
-        });
-        logRows.innerHTML = "";
-
-        if (data.logs.length === 0) {
-            logMessage("No log entries found.");
-            return;
-        }
-
-        data.logs.forEach(function (l) {
-            const tr = document.createElement("tr");
-            const time = cell(l.created);
-            time.className = "nowrap";
-            const details = cell(l.details || "");
-            details.className = "log-details";
-
-            tr.appendChild(time);
-            tr.appendChild(cell(l.username || "—"));
-            tr.appendChild(cell(ACTION_LABELS[l.action] || l.action));
-            tr.appendChild(details);
-            tr.appendChild(cell(l.ip || ""));
-            logRows.appendChild(tr);
-        });
-    } catch (e) {
-        logMessage(e.message);
-    }
-}
-
-document.getElementById("logRefreshBtn").addEventListener("click", loadLogs);
-logFilter.addEventListener("change", loadLogs);
-logSearch.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") loadLogs();
+document.addEventListener("sectionchange", function (e) {
+    if (e.detail === "activity-log") activityLog.reload();
 });

@@ -76,6 +76,42 @@ function countActiveAdmins(PDO $conn): int {
     )->fetchColumn();
 }
 
+function shipmentRef(int $id): string {
+    return 'SH-' . str_pad((string)$id, 5, '0', STR_PAD_LEFT);
+}
+
+function logQuery(string $filter, string $search, int $limit): array {
+    $where  = [];
+    $params = [];
+
+    if ($filter !== '') {
+        $where[]  = 'darbiba = ?';
+        $params[] = $filter;
+    }
+    if ($search !== '') {
+        $where[]  = '(`lietotajvards` LIKE ? OR detalas LIKE ?)';
+        $like     = '%' . $search . '%';
+        $params[] = $like;
+        $params[] = $like;
+    }
+
+    $sql = 'SELECT zurnala_id AS id, `lietotajvards` AS username, darbiba AS action,
+                   detalas AS details, ip, izveidots AS created
+            FROM zurnals'
+         . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
+         . ' ORDER BY zurnala_id DESC LIMIT ' . $limit;
+
+    return [$sql, $params];
+}
+
+function csvSafe($value): string {
+    $text = (string)$value;
+    if ($text !== '' && strpos("=+-@\t\r", $text[0]) !== false) {
+        return "'" . $text;
+    }
+    return $text;
+}
+
 try {
     $action = $_GET['action'] ?? '';
     $data   = input();
@@ -360,35 +396,217 @@ try {
         respond(['ok' => true]);
     }
 
-    if ($action === 'list-logs') {
-        requireRole(['admin']);
-        $where  = [];
+    if ($action === 'list-shipments') {
+        requireRole(['admin', 'worker']);
+        $status = trim((string)($data['status'] ?? ''));
+
+        $sql = 'SELECT sutijuma_id AS id, galamerkis AS destination, piezimes AS notes,
+                       statuss AS status, izveidoja_vards AS created_by, izveidots AS created
+                FROM sutijumi';
         $params = [];
-
-        $filter = trim((string)($data['filter'] ?? ''));
-        $search = trim((string)($data['search'] ?? ''));
-
-        if ($filter !== '') {
-            $where[]  = 'darbiba = ?';
-            $params[] = $filter;
+        if ($status !== '') {
+            $sql .= ' WHERE statuss = ?';
+            $params[] = $status;
         }
-        if ($search !== '') {
-            $where[]  = '(`lietotajvards` LIKE ? OR detalas LIKE ?)';
-            $like     = '%' . $search . '%';
-            $params[] = $like;
-            $params[] = $like;
-        }
-        $limit = min(500, max(1, (int)($data['limit'] ?? 200)));
-
-        $sql = 'SELECT zurnala_id AS id, `lietotajvards` AS username, darbiba AS action,
-                       detalas AS details, ip, izveidots AS created
-                FROM zurnals'
-             . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
-             . ' ORDER BY zurnala_id DESC LIMIT ' . $limit;
+        $sql .= ' ORDER BY sutijuma_id DESC LIMIT 200';
 
         $stmt = $conn->prepare($sql);
         $stmt->execute($params);
+        $shipments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $index = [];
+        foreach ($shipments as $i => $row) {
+            $shipments[$i]['reference'] = shipmentRef((int)$row['id']);
+            $shipments[$i]['items'] = [];
+            $index[(int)$row['id']] = $i;
+        }
+
+        if ($index) {
+            $in = implode(',', array_fill(0, count($index), '?'));
+            $stmt = $conn->prepare(
+                "SELECT sutijuma_id, nosaukums AS name, sku, daudzums AS quantity
+                 FROM sutijumu_rindas WHERE sutijuma_id IN ($in) ORDER BY rinda_id"
+            );
+            $stmt->execute(array_keys($index));
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $line) {
+                $shipments[$index[(int)$line['sutijuma_id']]]['items'][] = [
+                    'name'     => $line['name'],
+                    'sku'      => $line['sku'],
+                    'quantity' => (int)$line['quantity']
+                ];
+            }
+        }
+        respond(['shipments' => $shipments]);
+    }
+
+    if ($action === 'create-shipment') {
+        $uid = requireRole(['admin', 'worker']);
+        $destination = trim((string)($data['destination'] ?? ''));
+        $notes       = trim((string)($data['notes'] ?? ''));
+        $rawItems    = $data['items'] ?? null;
+
+        if ($destination === '' || mb_strlen($destination) > 150 || mb_strlen($notes) > 500
+            || !is_array($rawItems) || count($rawItems) < 1 || count($rawItems) > 50) {
+            respond(['error' => 'Enter a destination and add at least one product.'], 400);
+        }
+
+        $wanted = [];
+        foreach ($rawItems as $it) {
+            $pid = is_array($it) ? filter_var($it['productId'] ?? null, FILTER_VALIDATE_INT) : false;
+            $qty = is_array($it) ? filter_var($it['quantity'] ?? null, FILTER_VALIDATE_INT) : false;
+            if (!$pid || $pid < 1 || $qty === false || $qty === null || $qty < 1) {
+                respond(['error' => 'Each item needs a product and a quantity of at least 1.'], 400);
+            }
+            $wanted[$pid] = ($wanted[$pid] ?? 0) + $qty;
+        }
+        ksort($wanted); // same lock order every time avoids deadlocks
+
+        $stmt = $conn->prepare('SELECT `lietotajvārds` FROM lietotaju_registrs WHERE lietotaji_id = ?');
+        $stmt->execute([$uid]);
+        $creatorName = $stmt->fetchColumn() ?: null;
+
+        $conn->beginTransaction();
+
+        $lines = [];
+        foreach ($wanted as $pid => $qty) {
+            $stmt = $conn->prepare('SELECT nosaukums, sku, daudzums FROM produkti WHERE produkta_id = ? FOR UPDATE');
+            $stmt->execute([$pid]);
+            $p = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$p) {
+                $conn->rollBack();
+                respond(['error' => 'A selected product no longer exists.'], 404);
+            }
+            if ((int)$p['daudzums'] < $qty) {
+                $conn->rollBack();
+                respond(['error' => 'Not enough stock for ' . $p['nosaukums'] . ' (available: ' . $p['daudzums'] . ').'], 409);
+            }
+            $lines[] = ['id' => $pid, 'name' => $p['nosaukums'], 'sku' => $p['sku'], 'qty' => $qty];
+        }
+
+        $stmt = $conn->prepare(
+            'INSERT INTO sutijumi (galamerkis, piezimes, statuss, izveidoja, izveidoja_vards)
+             VALUES (?, ?, \'pending\', ?, ?)'
+        );
+        $stmt->execute([$destination, $notes === '' ? null : $notes, $uid, $creatorName]);
+        $shipmentId = (int)$conn->lastInsertId();
+
+        $insertLine = $conn->prepare(
+            'INSERT INTO sutijumu_rindas (sutijuma_id, produkta_id, nosaukums, sku, daudzums) VALUES (?, ?, ?, ?, ?)'
+        );
+        $takeStock = $conn->prepare('UPDATE produkti SET daudzums = daudzums - ? WHERE produkta_id = ?');
+        $summary = [];
+        foreach ($lines as $l) {
+            $insertLine->execute([$shipmentId, $l['id'], $l['name'], $l['sku'], $l['qty']]);
+            $takeStock->execute([$l['qty'], $l['id']]);
+            $summary[] = $l['name'] . ' ×' . $l['qty'];
+        }
+        $conn->commit();
+
+        $ref = shipmentRef($shipmentId);
+        logAction($conn, $uid, 'shipment_create', $ref . ' → ' . $destination . ': ' . implode(', ', $summary));
+        respond(['ok' => true, 'id' => $shipmentId, 'reference' => $ref]);
+    }
+
+    if ($action === 'set-shipment-status') {
+        $uid = requireRole(['admin', 'worker']);
+        $id  = filter_var($data['shipmentId'] ?? null, FILTER_VALIDATE_INT);
+        $new = (string)($data['status'] ?? '');
+
+        $allowed = [
+            'pending' => ['packed', 'cancelled'],
+            'packed'  => ['shipped', 'cancelled'],
+            'shipped' => ['delivered']
+        ];
+        if (!$id || !in_array($new, ['packed', 'shipped', 'delivered', 'cancelled'], true)) {
+            respond(['error' => 'Invalid data.'], 400);
+        }
+
+        $conn->beginTransaction();
+
+        $stmt = $conn->prepare('SELECT statuss FROM sutijumi WHERE sutijuma_id = ? FOR UPDATE');
+        $stmt->execute([$id]);
+        $current = $stmt->fetchColumn();
+
+        if ($current === false) {
+            $conn->rollBack();
+            respond(['error' => 'Shipment not found.'], 404);
+        }
+        if (!in_array($new, $allowed[$current] ?? [], true)) {
+            $conn->rollBack();
+            respond(['error' => 'This shipment cannot be changed to that status.'], 400);
+        }
+
+        if ($new === 'cancelled') {
+            $stmt = $conn->prepare('SELECT produkta_id, daudzums FROM sutijumu_rindas WHERE sutijuma_id = ?');
+            $stmt->execute([$id]);
+            $restore = $conn->prepare('UPDATE produkti SET daudzums = daudzums + ? WHERE produkta_id = ?');
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $line) {
+                if ($line['produkta_id'] !== null) {
+                    $restore->execute([(int)$line['daudzums'], (int)$line['produkta_id']]);
+                }
+            }
+        }
+
+        $stmt = $conn->prepare('UPDATE sutijumi SET statuss = ? WHERE sutijuma_id = ?');
+        $stmt->execute([$new, $id]);
+        $conn->commit();
+
+        logAction($conn, $uid, 'shipment_status', shipmentRef($id) . ': ' . $current . ' → ' . $new);
+        respond(['ok' => true]);
+    }
+
+    if ($action === 'list-logs') {
+        requireRole(['admin', 'worker']);
+        $filter = trim((string)($data['filter'] ?? ''));
+        $search = trim((string)($data['search'] ?? ''));
+        $limit  = min(500, max(1, (int)($data['limit'] ?? 200)));
+
+        [$sql, $params] = logQuery($filter, $search, $limit);
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
         respond(['logs' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+    }
+
+    if ($action === 'export-logs') {
+        $uid    = requireRole(['admin', 'worker']);
+        $filter = trim((string)($_GET['filter'] ?? ''));
+        $search = trim((string)($_GET['search'] ?? ''));
+
+        [$sql, $params] = logQuery($filter, $search, 50000);
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
+
+        $labels = [
+            'login' => 'Login', 'login_failed' => 'Failed login', 'login_blocked' => 'Blocked login',
+            'logout' => 'Logout', 'register' => 'Registration', 'profile_update' => 'Profile update',
+            'account_delete' => 'Account deleted', 'user_add' => 'User added', 'role_change' => 'Role changed',
+            'active_change' => 'Active changed', 'product_add' => 'Product added',
+            'product_update' => 'Product updated', 'product_delete' => 'Product deleted',
+            'shipment_create' => 'Shipment created', 'shipment_status' => 'Shipment status',
+            'log_export' => 'Log exported'
+        ];
+
+        logAction($conn, $uid, 'log_export', 'Filter: ' . ($filter === '' ? 'all' : $filter)
+            . ($search === '' ? '' : ', search: ' . $search));
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="activity-log-' . date('Y-m-d') . '.csv"');
+
+        $outFile = fopen('php://output', 'w');
+        fwrite($outFile, "\xEF\xBB\xBF");
+        fputcsv($outFile, ['Time', 'User', 'Action', 'Details', 'IP'], ',', '"', '\\');
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            fputcsv($outFile, [
+                csvSafe($row['created']),
+                csvSafe($row['username']),
+                csvSafe($labels[$row['action']] ?? $row['action']),
+                csvSafe($row['details']),
+                csvSafe($row['ip'])
+            ], ',', '"', '\\');
+        }
+        fclose($outFile);
+        exit;
     }
 
     respond(['error' => 'Unknown action.'], 404);
