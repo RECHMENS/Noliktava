@@ -8,16 +8,16 @@ $user = guardPage(['worker', 'admin']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warehouse – Worker</title>
-    <link rel="stylesheet" href="dashboard.css?v=11">
-    <link rel="stylesheet" href="popup.css?v=11">
+    <link rel="stylesheet" href="dashboard.css?v=12">
+    <link rel="stylesheet" href="popup.css?v=12">
 </head>
 <body>
     <?php renderHeader($user, 'Worker'); ?>
 
     <div class="layout">
         <nav class="menu" aria-label="Worker sections">
-            <button type="button" class="menu-item active" data-section="products">Products</button>
             <button type="button" class="menu-item" data-section="shipments">Shipments</button>
+            <button type="button" class="menu-item active" data-section="products">Products</button>
             <button type="button" class="menu-item" data-section="activity-log">Activity log</button>
         </nav>
 
@@ -48,21 +48,20 @@ $user = guardPage(['worker', 'admin']);
         </main>
     </div>
 
-    <script src="popup.js?v=11"></script>
-    <script src="error.js?v=11"></script>
-    <script src="products.js?v=11"></script>
-    <script src="shipments.js?v=11"></script>
-    <script src="activitylog.js?v=11"></script>
+    <script src="popup.js"></script>
+    <script src="error.js"></script>
+    <script src="products.js"></script>
+    <script src="shipments.js"></script>
+    <script src="activitylog.js"></script>
     <script>
         initProducts(document.getElementById("productRows"), false);
         initShipments(document.getElementById("shipments"));
         const activityLog = initActivityLog(document.getElementById("activityLog"));
 
-        // Reload the log whenever its menu section is opened
         document.addEventListener("sectionchange", function (e) {
             if (e.detail === "activity-log") activityLog.reload();
         });
     </script>
-    <script src="menu.js?v=11"></script>
+    <script src="menu.js?v=12"></script>
 </body>
 </html>

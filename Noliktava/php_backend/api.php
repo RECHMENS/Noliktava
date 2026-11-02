@@ -80,6 +80,10 @@ function shipmentRef(int $id): string {
     return 'SH-' . str_pad((string)$id, 5, '0', STR_PAD_LEFT);
 }
 
+function placeText(string $value): string {
+    return $value === '' ? '—' : $value;
+}
+
 function logQuery(string $filter, string $search, int $limit): array {
     $where  = [];
     $params = [];
@@ -371,9 +375,11 @@ try {
         if ($old['nosaukums'] !== $name)        { $changes[] = 'name: ' . $old['nosaukums'] . ' → ' . $name; }
         if ($old['sku'] !== $sku)               { $changes[] = 'SKU: ' . $old['sku'] . ' → ' . $sku; }
         if ((int)$old['daudzums'] !== $quantity) { $changes[] = 'quantity: ' . $old['daudzums'] . ' → ' . $quantity; }
-        if (($old['vieta'] ?? '') !== $location) { $changes[] = 'location: ' . (($old['vieta'] ?? '') === '' ? '—' : $old['vieta']) . ' → ' . ($location === '' ? '—' : $location); }
         if ($changes) {
             logAction($conn, $uid, 'product_update', $old['nosaukums'] . ' (SKU ' . $old['sku'] . '): ' . implode('; ', $changes));
+        }
+        if (($old['vieta'] ?? '') !== $location) {
+            logAction($conn, $uid, 'product_location', $name . ' (SKU ' . $sku . '): ' . placeText($old['vieta'] ?? '') . ' → ' . placeText($location));
         }
         respond(['ok' => true]);
     }
@@ -394,6 +400,41 @@ try {
             logAction($conn, $uid, 'product_delete', $old['nosaukums'] . ' (SKU ' . $old['sku'] . ')');
         }
         respond(['ok' => true]);
+    }
+
+    if ($action === 'set-product-location') {
+        $uid      = requireRole(['admin', 'worker', 'sorter']);
+        $id       = filter_var($data['productId'] ?? null, FILTER_VALIDATE_INT);
+        $location = trim((string)($data['location'] ?? ''));
+
+        if (!$id || $location === '' || mb_strlen($location) > 100) {
+            respond(['error' => 'Enter a location (up to 100 characters).'], 400);
+        }
+
+        $stmt = $conn->prepare('SELECT nosaukums, sku, vieta FROM produkti WHERE produkta_id = ?');
+        $stmt->execute([$id]);
+        $old = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$old) {
+            respond(['error' => 'Product not found.'], 404);
+        }
+
+        if (($old['vieta'] ?? '') !== $location) {
+            $stmt = $conn->prepare('UPDATE produkti SET vieta = ? WHERE produkta_id = ?');
+            $stmt->execute([$location, $id]);
+            logAction($conn, $uid, 'product_location',
+                $old['nosaukums'] . ' (SKU ' . $old['sku'] . '): ' . placeText($old['vieta'] ?? '') . ' → ' . $location);
+        }
+        respond(['ok' => true]);
+    }
+
+    if ($action === 'list-placement-history') {
+        requireRole(['admin', 'worker', 'sorter']);
+        $stmt = $conn->query(
+            "SELECT lietotajvards AS username, detalas AS details, izveidots AS created
+             FROM zurnals WHERE darbiba = 'product_location'
+             ORDER BY zurnala_id DESC LIMIT 200"
+        );
+        respond(['history' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
     }
 
     if ($action === 'list-shipments') {
@@ -459,7 +500,7 @@ try {
             }
             $wanted[$pid] = ($wanted[$pid] ?? 0) + $qty;
         }
-        ksort($wanted); // same lock order every time avoids deadlocks
+        ksort($wanted);
 
         $stmt = $conn->prepare('SELECT `lietotajvārds` FROM lietotaju_registrs WHERE lietotaji_id = ?');
         $stmt->execute([$uid]);
@@ -583,6 +624,7 @@ try {
             'account_delete' => 'Account deleted', 'user_add' => 'User added', 'role_change' => 'Role changed',
             'active_change' => 'Active changed', 'product_add' => 'Product added',
             'product_update' => 'Product updated', 'product_delete' => 'Product deleted',
+            'product_location' => 'Placement changed',
             'shipment_create' => 'Shipment created', 'shipment_status' => 'Shipment status',
             'log_export' => 'Log exported'
         ];

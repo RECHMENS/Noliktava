@@ -13,6 +13,7 @@ function initActivityLog(container) {
         product_add: "Product added",
         product_update: "Product updated",
         product_delete: "Product deleted",
+        product_location: "Placement changed",
         shipment_create: "Shipment created",
         shipment_status: "Shipment status",
         log_export: "Log exported"

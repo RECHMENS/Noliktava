@@ -200,3 +200,18 @@ td small { display: block; opacity: 0.8; margin-top: 2px; }
 }
 
 .stack { display: grid; gap: 16px; }
+
+.search-box { width: 100%; max-width: 420px; margin-bottom: 12px; }
+.badge-ok  { background: #3f8f5a; }
+.badge-low { background: #c9962b; }
+.badge-out { background: #b94a4a; }
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 22px;
+}
+.stat { background: #3c6a96; border-radius: 12px; padding: 14px 16px; }
+.stat strong { display: block; font-size: 26px; }
+.stat span { font-size: 14px; opacity: 0.85; }

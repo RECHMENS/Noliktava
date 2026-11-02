@@ -9,17 +9,17 @@ $myId = (int)$user['lietotaji_id'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warehouse – Admin</title>
-    <link rel="stylesheet" href="dashboard.css?v=11">
-    <link rel="stylesheet" href="popup.css?v=11">
+    <link rel="stylesheet" href="dashboard.css?v=12">
+    <link rel="stylesheet" href="popup.css?v=12">
 </head>
 <body data-user-id="<?= $myId ?>">
     <?php renderHeader($user, 'Admin panel'); ?>
 
     <div class="layout">
         <nav class="menu" aria-label="Admin sections">
+            <button type="button" class="menu-item" data-section="products">Products</button>
             <button type="button" class="menu-item active" data-section="add-user">Add users</button>
             <button type="button" class="menu-item" data-section="users">Users</button>
-            <button type="button" class="menu-item" data-section="products">Products</button>
             <button type="button" class="menu-item" data-section="shipments">Shipments</button>
             <button type="button" class="menu-item" data-section="activity-log">Activity log</button>
         </nav>
@@ -92,12 +92,12 @@ $myId = (int)$user['lietotaji_id'];
     </main>
     </div>
 
-    <script src="popup.js?v=11"></script>
-    <script src="error.js?v=11"></script>
-    <script src="products.js?v=11"></script>
-    <script src="shipments.js?v=11"></script>
-    <script src="activitylog.js?v=11"></script>
-    <script src="admin.js?v=11"></script>
-    <script src="menu.js?v=11"></script>
+    <script src="popup.js"></script>
+    <script src="error.js"></script>
+    <script src="products.js"></script>
+    <script src="shipments.js"></script>
+    <script src="activitylog.js"></script>
+    <script src="admin.js"></script>
+    <script src="menu.js"></script>
 </body>
 </html>
