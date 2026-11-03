@@ -60,6 +60,6 @@ $user = guardPage(['sorter', 'admin']);
             if (pages[e.detail]) pages[e.detail].reload();
         });
     </script>
-    <script src="menu.js?v=12"></script>
+    <script src="menu.js"></script>
 </body>
 </html>

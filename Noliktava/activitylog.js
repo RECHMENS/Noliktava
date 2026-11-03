@@ -76,8 +76,6 @@ function initActivityLog(container) {
     wrap.appendChild(table);
     container.appendChild(wrap);
 
-    container.appendChild(el("p", "muted", "The table shows the latest 200 matching entries. Export CSV includes all matching entries."));
-
     function message(text) {
         tbody.innerHTML = "";
         const tr = el("tr");

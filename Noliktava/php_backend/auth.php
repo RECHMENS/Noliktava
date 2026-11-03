@@ -29,6 +29,11 @@ function guardPage(array $allowedRoles): array {
 
     $_SESSION['role'] = $user['loma'];
 
+    if (empty($user['loma'])) {
+        header('Location: norole.php');
+        exit;
+    }
+
     if (!in_array($user['loma'], $allowedRoles, true)) {
         $home = ['admin' => 'admin.php', 'worker' => 'worker.php', 'sorter' => 'sorter.php'];
         if (isset($home[$user['loma']])) {

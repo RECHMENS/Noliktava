@@ -62,6 +62,6 @@ $user = guardPage(['worker', 'admin']);
             if (e.detail === "activity-log") activityLog.reload();
         });
     </script>
-    <script src="menu.js?v=12"></script>
+    <script src="menu.js"></script>
 </body>
 </html>
