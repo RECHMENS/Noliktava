@@ -9,7 +9,7 @@ function guardPage(array $allowedRoles): array {
     header('Cache-Control: no-store');
 
     if (empty($_SESSION['user_id'])) {
-        header('Location: login.html');
+        header('Location: ../login.html');
         exit;
     }
 
@@ -23,7 +23,7 @@ function guardPage(array $allowedRoles): array {
     if (!$user || !(int)$user['aktivs']) {
         $_SESSION = [];
         session_destroy();
-        header('Location: login.html');
+        header('Location: ../login.html');
         exit;
     }
 
@@ -55,7 +55,7 @@ function renderHeader(array $user, string $title): void {
 <header class="topbar">
     <h1>{$t}</h1>
     <div class="who">
-        <img src="php_backend/profile_picture.php" alt="" class="avatar" onerror="this.style.visibility='hidden'">
+        <img src="../php_backend/profile_picture.php" alt="" class="avatar" onerror="this.style.visibility='hidden'">
         <span>{$name} <small>({$role})</small></span>
         <button type="button" id="logoutBtn" class="btn">Log out</button>
     </div>

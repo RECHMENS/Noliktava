@@ -239,7 +239,7 @@ try {
         $target = filter_var($data['userId'] ?? null, FILTER_VALIDATE_INT);
         $role   = $data['role'] ?? '';
 
-        if (!$target || !in_array($role, ROLES, true)) {
+        if (!$target || ($role !== '' && !in_array($role, ROLES, true))) {
             respond(['error' => 'Invalid data.'], 400);
         }
         if ($target === $uid) {
@@ -253,8 +253,8 @@ try {
         }
 
         $stmt = $conn->prepare('UPDATE lietotaju_registrs SET loma = ? WHERE lietotaji_id = ?');
-        $stmt->execute([$role, $target]);
-        logAction($conn, $uid, 'role_change', $old['username'] . ': ' . $old['loma'] . ' → ' . $role);
+        $stmt->execute([$role === '' ? null : $role, $target]);
+        logAction($conn, $uid, 'role_change', $old['username'] . ': ' . ($old['loma'] ?: 'no role') . ' → ' . ($role === '' ? 'no role' : $role));
         respond(['ok' => true]);
     }
 

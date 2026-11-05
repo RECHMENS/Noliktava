@@ -49,7 +49,7 @@ try {
 
     $insert = $conn->prepare(
         "INSERT INTO lietotaju_registrs (`lietotajvārds`, Epasts, parole, profila_bilde, loma, aktivs)
-         VALUES (:username, :email, :password, :image, 'worker', 1)"
+         VALUES (:username, :email, :password, :image, NULL, 1)"
     );
     $insert->bindValue(':username', $username);
     $insert->bindValue(':email', $email);
